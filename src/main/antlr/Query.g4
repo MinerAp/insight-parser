@@ -68,7 +68,7 @@ actee: (inversion = INVERSION?)ACTEE (a = STRING {builder.addActee(cleanString($
 
 material: (inversion = INVERSION?)MATERIAL (mat = STRING {String materialName = cleanString($mat.text).toUpperCase(); InsightMaterial mat = MaterialCompat.getWildcardMaterial(materialName); if (mat == null) { throw new InvalidMaterialException(materialName);} builder.addMaterial(mat);})+ {if ($inversion.text != null) {builder.invertMaterials();}};
 
-radius: RADIUS (val = NUMBER) {int radius = Integer.parseInt($val.text.trim()); if(radius <= 0) {throw new InvalidRadiusException(Integer.toString(radius));} builder.setArea(null, radius);};
+radius: RADIUS (val = (NUMBER | STRING)) {String radiusString = $val.text.trim(); int radius = 0; if (radiusString.equalsIgnoreCase("worldedit")) {radius = QueryParameters.WORLDEDIT;} else {try {radius = Integer.parseInt(radiusString);} catch (NumberFormatException e) {throw new InvalidRadiusException(radiusString);} if(radius <= 0) {throw new InvalidRadiusException(radiusString);}} builder.setArea(null, radius);};
 
 before: BEFORE (duration=DURATION) {builder.setBefore(getOffsetDate($duration.text));};
 
@@ -99,7 +99,7 @@ STRING: (SINGLE_QUOTED_STRING | DOUBLE_QUOTED_STRING | BASE_STRING) SPACE?;
 fragment SINGLE_QUOTED_STRING: SINGLE_QUOTE BASE_STRING SINGLE_QUOTE;
 fragment DOUBLE_QUOTED_STRING: DOUBLE_QUOTE BASE_STRING DOUBLE_QUOTE;
 fragment BASE_STRING: (LOWER_CASE | UPPER_CASE | DIGIT | UNDERSCORE)+;
-          
+
 fragment YEAR: 'Y' | 'y';
 fragment WEEK: 'W' | 'w';
 fragment DAY: 'D' | 'd';
