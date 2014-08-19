@@ -14,6 +14,6 @@ public class InvalidTokenException extends IllegalArgumentException {
     }
 
     public enum TokenType {
-        ACTION, MATERIAL, RADIUS
+        ACTION, MATERIAL, RADIUS, WORLD
     }
 }

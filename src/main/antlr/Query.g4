@@ -3,7 +3,9 @@ grammar Query;
 @parser::header {
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
+import java.util.Set;
 
 import com.amshulman.insight.action.InsightAction;
 import com.amshulman.insight.parser.InvalidTokenException.TokenType;
@@ -12,11 +14,16 @@ import com.amshulman.insight.query.QueryParameters;
 import com.amshulman.insight.types.EventCompat;
 import com.amshulman.insight.types.InsightMaterial;
 import com.amshulman.insight.types.MaterialCompat;
+
+import lombok.Getter;
+import lombok.Setter;
 }
 
 @parser::members {
 private static final String SINGLE_QUOTE = "\'";
 private static final String DOUBLE_QUOTE = "\"";
+
+@Getter @Setter public static Set<String> worlds = Collections.emptySet();
 
 private final QueryParameterBuilder builder = new QueryParameterBuilder();
 
@@ -72,7 +79,7 @@ before: BEFORE (duration=DURATION) {builder.setBefore(getOffsetDate($duration.te
 
 after: AFTER (duration=DURATION) {builder.setAfter(getOffsetDate($duration.text));};
 
-world: WORLD (w = STRING {builder.addWorld(cleanString($w.text));})+;
+world: WORLD (w = STRING {String world = cleanString($w.text); if (!worlds.contains(world)) {throw new InvalidTokenException(TokenType.WORLD, world);} builder.addWorld(world);})+;
 
 INVERSION: '!';
 ACTEE: 'actee ';
