@@ -1,19 +1,17 @@
 grammar Query;
 
 @parser::header {
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+
 import com.amshulman.insight.action.InsightAction;
+import com.amshulman.insight.parser.InvalidTokenException.TokenType;
 import com.amshulman.insight.query.QueryParameterBuilder;
 import com.amshulman.insight.query.QueryParameters;
 import com.amshulman.insight.types.EventCompat;
 import com.amshulman.insight.types.InsightMaterial;
 import com.amshulman.insight.types.MaterialCompat;
-
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Date;
-
-import org.bukkit.Location;
-import org.bukkit.Material;
 }
 
 @parser::members {
@@ -62,13 +60,13 @@ params: actor | action | actee | material | radius | before | after | world;
 
 actor: (inversion = INVERSION?)ACTOR (a = STRING {builder.addActor(cleanString($a.text));})+ {if ($inversion.text != null) {builder.invertActors();}};
 
-action: (inversion = INVERSION?)ACTION (a = STRING {String actionName = cleanString($a.text); Collection<InsightAction> actions = EventCompat.getQueryActions(actionName); if (actions == null) {throw new InvalidActionException(actionName);} for (InsightAction action : actions) {builder.addAction(action);}})+ {if ($inversion.text != null) {builder.invertActions();}};
+action: (inversion = INVERSION?)ACTION (a = STRING {String actionName = cleanString($a.text); Collection<InsightAction> actions = EventCompat.getQueryActions(actionName); if (actions == null) {throw new InvalidTokenException(TokenType.ACTION, actionName);} for (InsightAction action : actions) {builder.addAction(action);}})+ {if ($inversion.text != null) {builder.invertActions();}};
 
 actee: (inversion = INVERSION?)ACTEE (a = STRING {builder.addActee(cleanString($a.text));})+ {if ($inversion.text != null) {builder.invertActees();}};
 
-material: (inversion = INVERSION?)MATERIAL (mat = STRING {String materialName = cleanString($mat.text).toUpperCase(); InsightMaterial mat = MaterialCompat.getWildcardMaterial(materialName); if (mat == null) { throw new InvalidMaterialException(materialName);} builder.addMaterial(mat);})+ {if ($inversion.text != null) {builder.invertMaterials();}};
+material: (inversion = INVERSION?)MATERIAL (mat = STRING {String materialName = cleanString($mat.text).toUpperCase(); InsightMaterial mat = MaterialCompat.getWildcardMaterial(materialName); if (mat == null) { throw new InvalidTokenException(TokenType.MATERIAL, materialName);} builder.addMaterial(mat);})+ {if ($inversion.text != null) {builder.invertMaterials();}};
 
-radius: RADIUS (val = (NUMBER | STRING)) {String radiusString = $val.text.trim(); int radius = 0; if (radiusString.equalsIgnoreCase("worldedit")) {radius = QueryParameters.WORLDEDIT;} else {try {radius = Integer.parseInt(radiusString);} catch (NumberFormatException e) {throw new InvalidRadiusException(radiusString);} if(radius <= 0) {throw new InvalidRadiusException(radiusString);}} builder.setArea(null, radius);};
+radius: RADIUS (val = (NUMBER | STRING)) {String radiusString = $val.text.trim(); int radius = 0; if (radiusString.equalsIgnoreCase("worldedit")) {radius = QueryParameters.WORLDEDIT;} else {try {radius = Integer.parseInt(radiusString);} catch (NumberFormatException e) {throw new InvalidTokenException(TokenType.RADIUS, radiusString);} if(radius <= 0) {throw new InvalidTokenException(TokenType.RADIUS, radiusString);}} builder.setArea(null, radius);};
 
 before: BEFORE (duration=DURATION) {builder.setBefore(getOffsetDate($duration.text));};
 
