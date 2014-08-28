@@ -67,7 +67,7 @@ params: actor | action | actee | material | radius | before | after | world;
 
 actor: (inversion = INVERSION?)ACTOR (a = STRING {builder.addActor(cleanString($a.text));})+ {if ($inversion.text != null) {builder.invertActors();}};
 
-action: (inversion = INVERSION?)ACTION (a = STRING {String actionName = cleanString($a.text); Collection<InsightAction> actions = EventCompat.getQueryActions(actionName); if (actions == null) {throw new InvalidTokenException(TokenType.ACTION, actionName);} for (InsightAction action : actions) {builder.addAction(action);}})+ {if ($inversion.text != null) {builder.invertActions();}};
+action: (inversion = INVERSION?)ACTION (a = STRING {String actionName = cleanString($a.text); Collection<InsightAction> actions = EventCompat.getQueryActions(actionName); if (actions.isEmpty()) {throw new InvalidTokenException(TokenType.ACTION, actionName);} for (InsightAction action : actions) {builder.addAction(action);}})+ {if ($inversion.text != null) {builder.invertActions();}};
 
 actee: (inversion = INVERSION?)ACTEE (a = STRING {builder.addActee(cleanString($a.text));})+ {if ($inversion.text != null) {builder.invertActees();}};
 
