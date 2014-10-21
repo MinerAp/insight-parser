@@ -5,6 +5,7 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Set;
 
 import com.amshulman.insight.action.InsightAction;
@@ -26,6 +27,13 @@ private static final String DOUBLE_QUOTE = "\"";
 @Getter @Setter public static Set<String> worlds = Collections.emptySet();
 
 private final QueryParameterBuilder builder = new QueryParameterBuilder();
+private final Set<String> usedParams = new HashSet<String>();
+
+private final void checkParam(Token param) {
+    if (!usedParams.add(cleanString(param).toUpperCase())) {
+        throw new UnexpectedTokenException(this, param);
+    }
+}
 
 private static Date getOffsetDate(String duration) {
     Calendar c = Calendar.getInstance();
@@ -50,8 +58,8 @@ private static int subtractFieldIfExists(Calendar c, String duration, int previo
     return previousFieldLocation;
 }
 
-private static String cleanString(String raw) {
-    String cleaned = raw.trim();
+private static String cleanString(Token raw) {
+    String cleaned = raw.getText().trim();
     
     if((cleaned.startsWith(SINGLE_QUOTE) && cleaned.endsWith(SINGLE_QUOTE)) || (cleaned.startsWith(DOUBLE_QUOTE) && cleaned.endsWith(DOUBLE_QUOTE))) {
         return cleaned.substring(1, cleaned.length() - 1);
@@ -65,21 +73,21 @@ parse returns [QueryParameters queryParameters]: params+ EOF {$queryParameters =
 
 params: actor | action | actee | material | radius | before | after | world;
 
-actor: (inversion = INVERSION?)ACTOR (a = STRING {builder.addActor(cleanString($a.text));})+ {if ($inversion.text != null) {builder.invertActors();}};
+actor: (inversion = INVERSION?)(keyword = ACTOR {checkParam($keyword);}) (a = STRING {builder.addActor(cleanString($a));})+ {if ($inversion.text != null) {builder.invertActors();}};
 
-action: (inversion = INVERSION?)ACTION (a = STRING {String actionName = cleanString($a.text); Collection<InsightAction> actions = EventCompat.getQueryActions(actionName); if (actions.isEmpty()) {throw new InvalidTokenException(TokenType.ACTION, actionName);} for (InsightAction action : actions) {builder.addAction(action);}})+ {if ($inversion.text != null) {builder.invertActions();}};
+action: (inversion = INVERSION?)(keyword = ACTION {checkParam($keyword);}) (a = STRING {String actionName = cleanString($a); Collection<InsightAction> actions = EventCompat.getQueryActions(actionName); if (actions.isEmpty()) {throw new InvalidTokenException(TokenType.ACTION, actionName);} for (InsightAction action : actions) {builder.addAction(action);}})+ {if ($inversion.text != null) {builder.invertActions();}};
 
-actee: (inversion = INVERSION?)ACTEE (a = STRING {builder.addActee(cleanString($a.text));})+ {if ($inversion.text != null) {builder.invertActees();}};
+actee: (inversion = INVERSION?)(keyword = ACTEE {checkParam($keyword);}) (a = STRING {builder.addActee(cleanString($a));})+ {if ($inversion.text != null) {builder.invertActees();}};
 
-material: (inversion = INVERSION?)MATERIAL (mat = STRING {String materialName = cleanString($mat.text).toUpperCase(); InsightMaterial mat = MaterialCompat.getWildcardMaterial(materialName); if (mat == null) { throw new InvalidTokenException(TokenType.MATERIAL, materialName);} builder.addMaterial(mat);})+ {if ($inversion.text != null) {builder.invertMaterials();}};
+material: (inversion = INVERSION?)(keyword = MATERIAL {checkParam($keyword);}) (mat = STRING {String materialName = cleanString($mat).toUpperCase(); InsightMaterial mat = MaterialCompat.getWildcardMaterial(materialName); if (mat == null) { throw new InvalidTokenException(TokenType.MATERIAL, materialName);} builder.addMaterial(mat);})+ {if ($inversion.text != null) {builder.invertMaterials();}};
 
-radius: RADIUS (val = (NUMBER | STRING)) {String radiusString = $val.text.trim(); int radius = 0; if (radiusString.equalsIgnoreCase("worldedit")) {radius = QueryParameters.WORLDEDIT;} else {try {radius = Integer.parseInt(radiusString);} catch (NumberFormatException e) {throw new InvalidTokenException(TokenType.RADIUS, radiusString);} if(radius <= 0) {throw new InvalidTokenException(TokenType.RADIUS, radiusString);}} builder.setArea(null, radius);};
+radius: (keyword = RADIUS {checkParam($keyword);}) (val = (NUMBER | STRING)) {String radiusString = $val.text.trim(); int radius = 0; if (radiusString.equalsIgnoreCase("worldedit")) {radius = QueryParameters.WORLDEDIT;} else {try {radius = Integer.parseInt(radiusString);} catch (NumberFormatException e) {throw new InvalidTokenException(TokenType.RADIUS, radiusString);} if(radius <= 0) {throw new InvalidTokenException(TokenType.RADIUS, radiusString);}} builder.setArea(null, radius);};
 
-before: BEFORE (duration=DURATION) {builder.setBefore(getOffsetDate($duration.text));};
+before: (keyword = BEFORE {checkParam($keyword);}) (duration = DURATION) {builder.setBefore(getOffsetDate($duration.text));};
 
-after: AFTER (duration=DURATION) {builder.setAfter(getOffsetDate($duration.text));};
+after: (keyword = AFTER {checkParam($keyword);}) (duration = DURATION) {builder.setAfter(getOffsetDate($duration.text));};
 
-world: WORLD (w = STRING {String world = cleanString($w.text); if (!worlds.contains(world)) {throw new InvalidTokenException(TokenType.WORLD, world);} builder.addWorld(world);})+;
+world: (keyword = WORLD {checkParam($keyword);}) (w = STRING {String world = cleanString($w); if (!worlds.contains(world)) {throw new InvalidTokenException(TokenType.WORLD, world);} builder.addWorld(world);})+;
 
 INVERSION: '!';
 ACTEE: 'actee ';
