@@ -30,7 +30,11 @@ private final QueryParameterBuilder builder = new QueryParameterBuilder();
 private final Set<String> usedParams = new HashSet<String>();
 
 private final void checkParam(Token param) {
-    if (!usedParams.add(cleanString(param).toUpperCase())) {
+    checkParam(cleanString(param), param);
+}
+
+private final void checkParam(String name, Token param) {
+    if (!usedParams.add(name)) {
         throw new UnexpectedTokenException(this, param);
     }
 }
@@ -71,7 +75,7 @@ private static String cleanString(Token raw) {
 
 parse returns [QueryParameters queryParameters]: params+ EOF {$queryParameters = builder.build();};
 
-params: actor | action | actee | material | radius | before | after | world;
+params: actor | action | actee | material | radius | before | after | world | order;
 
 actor: (inversion = INVERSION?)(keyword = ACTOR {checkParam($keyword);}) (a = STRING {builder.addActor(cleanString($a));})+ {if ($inversion.text != null) {builder.invertActors();}};
 
@@ -89,6 +93,8 @@ after: (keyword = AFTER {checkParam($keyword);}) (duration = DURATION) {builder.
 
 world: (keyword = WORLD {checkParam($keyword);}) (w = STRING {String world = cleanString($w); if (!worlds.contains(world)) {throw new InvalidTokenException(TokenType.WORLD, world);} builder.addWorld(world);})+;
 
+order: (keyword = (ASC | DESC) {checkParam("order", $keyword); builder.reverseOrder("asc".equalsIgnoreCase($keyword.text.trim()));});
+
 INVERSION: '!';
 ACTEE: 'actee ';
 ACTION: 'action ';
@@ -98,6 +104,8 @@ BEFORE: 'before ';
 MATERIAL: 'material ';
 RADIUS: 'radius ';
 WORLD: 'world ';
+ASC: 'asc' SPACE?;
+DESC: 'desc' SPACE?;
 
 DURATION: (((BASE_NUMBER YEAR) (BASE_NUMBER WEEK)? (BASE_NUMBER DAY)? (BASE_NUMBER HOUR)? (BASE_NUMBER MINUTE)?) | 
           ((BASE_NUMBER WEEK) (BASE_NUMBER DAY)? (BASE_NUMBER HOUR)? (BASE_NUMBER MINUTE)?) |
