@@ -64,11 +64,11 @@ private static int subtractFieldIfExists(Calendar c, String duration, int previo
 
 private static String cleanString(Token raw) {
     String cleaned = raw.getText().trim();
-    
+
     if((cleaned.startsWith(SINGLE_QUOTE) && cleaned.endsWith(SINGLE_QUOTE)) || (cleaned.startsWith(DOUBLE_QUOTE) && cleaned.endsWith(DOUBLE_QUOTE))) {
         return cleaned.substring(1, cleaned.length() - 1);
     }
-    
+
     return cleaned;
 }
 }
@@ -107,7 +107,7 @@ WORLD: 'world ';
 ASC: 'asc' SPACE?;
 DESC: 'desc' SPACE?;
 
-DURATION: (((BASE_NUMBER YEAR) (BASE_NUMBER WEEK)? (BASE_NUMBER DAY)? (BASE_NUMBER HOUR)? (BASE_NUMBER MINUTE)?) | 
+DURATION: (((BASE_NUMBER YEAR) (BASE_NUMBER WEEK)? (BASE_NUMBER DAY)? (BASE_NUMBER HOUR)? (BASE_NUMBER MINUTE)?) |
           ((BASE_NUMBER WEEK) (BASE_NUMBER DAY)? (BASE_NUMBER HOUR)? (BASE_NUMBER MINUTE)?) |
           ((BASE_NUMBER DAY) (BASE_NUMBER HOUR)? (BASE_NUMBER MINUTE)?) |
           ((BASE_NUMBER HOUR) (BASE_NUMBER MINUTE)?) |
