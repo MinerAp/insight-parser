@@ -12,7 +12,7 @@ import com.amshulman.insight.action.InsightAction;
 import com.amshulman.insight.parser.InvalidTokenException.TokenType;
 import com.amshulman.insight.query.QueryParameterBuilder;
 import com.amshulman.insight.query.QueryParameters;
-import com.amshulman.insight.types.EventCompat;
+import com.amshulman.insight.types.EventRegistry;
 import com.amshulman.insight.types.InsightMaterial;
 import com.amshulman.insight.types.MaterialCompat;
 
@@ -79,7 +79,7 @@ params: actor | action | actee | material | radius | before | after | world | or
 
 actor: (inversion = INVERSION?)(keyword = ACTOR {checkParam($keyword);}) (a = STRING {builder.addActor(cleanString($a));})+ {if ($inversion.text != null) {builder.invertActors();}};
 
-action: (inversion = INVERSION?)(keyword = ACTION {checkParam($keyword);}) (a = STRING {String actionName = cleanString($a); Collection<InsightAction> actions = EventCompat.getQueryActions(actionName); if (actions.isEmpty()) {throw new InvalidTokenException(TokenType.ACTION, actionName);} for (InsightAction action : actions) {builder.addAction(action);}})+ {if ($inversion.text != null) {builder.invertActions();}};
+action: (inversion = INVERSION?)(keyword = ACTION {checkParam($keyword);}) (a = STRING {String actionName = cleanString($a); Collection<InsightAction> actions = EventRegistry.getActionsByAlias(actionName); if (actions.isEmpty()) {throw new InvalidTokenException(TokenType.ACTION, actionName);} for (InsightAction action : actions) {builder.addAction(action);}})+ {if ($inversion.text != null) {builder.invertActions();}};
 
 actee: (inversion = INVERSION?)(keyword = ACTEE {checkParam($keyword);}) (a = STRING {builder.addActee(cleanString($a));})+ {if ($inversion.text != null) {builder.invertActees();}};
 
