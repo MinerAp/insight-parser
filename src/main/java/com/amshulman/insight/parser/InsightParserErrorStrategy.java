@@ -4,7 +4,6 @@ import org.antlr.v4.runtime.DefaultErrorStrategy;
 import org.antlr.v4.runtime.InputMismatchException;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.RecognitionException;
-import org.antlr.v4.runtime.misc.NotNull;
 
 public class InsightParserErrorStrategy extends DefaultErrorStrategy {
 
@@ -14,7 +13,7 @@ public class InsightParserErrorStrategy extends DefaultErrorStrategy {
     }
 
     @Override
-    protected void reportUnwantedToken(@NotNull Parser recognizer) {
+    protected void reportUnwantedToken(Parser recognizer) {
         throw new InputMismatchException(recognizer);
     }
 }
