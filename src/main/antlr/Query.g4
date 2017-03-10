@@ -1,10 +1,11 @@
 grammar Query;
 
 @parser::header {
-import java.util.Calendar;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -16,8 +17,11 @@ import com.amshulman.insight.types.EventRegistry;
 import com.amshulman.insight.types.InsightMaterial;
 import com.amshulman.insight.types.MaterialCompat;
 
+import com.google.common.collect.ImmutableList;
+
 import lombok.Getter;
 import lombok.Setter;
+import lombok.RequiredArgsConstructor;
 }
 
 @parser::members {
@@ -39,36 +43,38 @@ private final void checkParam(String name, Token param) {
     }
 }
 
-private static Date getOffsetDate(String duration) {
-    Calendar c = Calendar.getInstance();
-    int location = -1;
-
-    location = subtractFieldIfExists(c, duration, location, 'y', Calendar.YEAR);
-    location = subtractFieldIfExists(c, duration, location, 'w', Calendar.WEEK_OF_YEAR);
-    location = subtractFieldIfExists(c, duration, location, 'd', Calendar.DAY_OF_YEAR);
-    location = subtractFieldIfExists(c, duration, location, 'h', Calendar.HOUR_OF_DAY);
-    location = subtractFieldIfExists(c, duration, location, 'm', Calendar.MINUTE);
-
-    return c.getTime();
+@RequiredArgsConstructor
+private static class TemporalUnitWrapper {
+    final char fieldName;
+    final TemporalUnit temporalUnit;
 }
 
-private static int subtractFieldIfExists(Calendar c, String duration, int previousFieldLocation, char fieldName, int field) {
-    int fieldLocation = duration.indexOf(fieldName, previousFieldLocation);
-    if (fieldLocation > -1) {
-        c.add(field, -Integer.parseInt(duration.substring(previousFieldLocation + 1, fieldLocation)));
-        return fieldLocation;
-    }
+private static final List<TemporalUnitWrapper> TEMPORAL_UNITS = ImmutableList.of(
+    new TemporalUnitWrapper('y', ChronoUnit.YEARS),
+    new TemporalUnitWrapper('w', ChronoUnit.WEEKS),
+    new TemporalUnitWrapper('d', ChronoUnit.DAYS),
+    new TemporalUnitWrapper('h', ChronoUnit.HOURS),
+    new TemporalUnitWrapper('m', ChronoUnit.MINUTES));
 
-    return previousFieldLocation;
+private static LocalDateTime getOffsetDate(String duration) {
+    LocalDateTime time = LocalDateTime.now();
+    int location = -1;
+    for (TemporalUnitWrapper wrapper : TEMPORAL_UNITS) {
+	    int fieldLocation = duration.indexOf(wrapper.fieldName, location);
+	    if (fieldLocation > -1) {
+	        time = time.minus(Integer.parseInt(duration.substring(location + 1, fieldLocation)), wrapper.temporalUnit);
+	        location = fieldLocation;
+	    }
+    }
+    return time;
 }
 
 private static String cleanString(Token raw) {
     String cleaned = raw.getText().trim();
-
-    if((cleaned.startsWith(SINGLE_QUOTE) && cleaned.endsWith(SINGLE_QUOTE)) || (cleaned.startsWith(DOUBLE_QUOTE) && cleaned.endsWith(DOUBLE_QUOTE))) {
+    if ((cleaned.startsWith(SINGLE_QUOTE) && cleaned.endsWith(SINGLE_QUOTE)) ||
+        (cleaned.startsWith(DOUBLE_QUOTE) && cleaned.endsWith(DOUBLE_QUOTE))) {
         return cleaned.substring(1, cleaned.length() - 1);
     }
-
     return cleaned;
 }
 }
